@@ -16,107 +16,128 @@ class Node {
 }
 
 class BinarySearchTree {
-
 	constructor() {
-		this.root = null;
+		this.rootNode = null;
 	}
 
   root() {
-		if (!this.root) return;
-    return this.root;
+    return this.rootNode;
   }
 
-  add(data) {
-		this.root = addWhithin(this.root, data);
+  add(data, current=this.rootNode) { 
+		if (!current) {  // Если root вершина пустая(проверка сработает только на root)
+			this.rootNode = new Node(data);
+		} else {   // Если не пустая
 
-		function addWhithin(node, data) {
-			if (!node) { return new Node(data) }
-
-			if (data < node.data) {
-				node.left = addWhithin(node.left, data);
-			} else if (node.data === data) {
-				return node;
-			} else {
-				node.right = addWhithin(node.right, data);
-			}
-			return node;
-		}
-  }
-
-  has(data) {
-    return searchWithin(this.root, data);
-
-		function searchWithin(node, data) {
-			if (!node) return false;
-
-			if (node.data < node.value) {
-				return searchWithin(node.left, data);
-			} else if (node.data === node.value) {
-				return true;
-			} else {
-				return searchWithin(node.right, data);
+			// если новое значение больше значения вершины - вправо
+			if (data > current.data) {  
+				if (!current.right) {   // если правой ветки нет то записывает туда новый узел
+					current.right = new Node(data);
+				} else {   // если правая ветка есть то рекурсивно погружаемся вниз
+					this.add(data, current.right); 
+				}
+			// если новое значение равно текущему - возращаем undefined
+			} else if (data === current.data) {
+				return;
+			// если новое значение меньше значения вершины - влево
+			} else if (data < current.data) {
+				if (!current.left) {   // если левой ветки нет то записывает туда новый узел
+					current.left = new Node(data);
+				} else {   // если левая ветка есть то рекурсивно погружаемся вниз слева
+					this.add(data, current.left); 
+				}
 			}
 		}
   }
 
-  find(data) {
-    return this.root;
+  has(data, current=this.rootNode) {
+		return this.find(data, current) ? true : false; // тут все ясно и так
   }
 
-  remove(data) {
-    this.root = removeNode(this.root, data);
-
-		function removeNode(node, data) {
-			if (!node) return null;
-
-			if ( data < node.data ) {
-				node.left = removeNode(node.left, data);
-				return node;
-			} else if ( data > node.data ) {
-				node.right = removeNode(node.right, data);
-				return node;
+  find(data, current=this.rootNode) {
+    // Если дерево пустое - false
+		// проверка будет срабатывать постоянно, нужно вынести из цикла
+		if (!current) return null;		
+		// Обход дерева
+		// let current = this.node;
+		// Если data больше текущей, пожалуй поищем справа
+		if (data > current.data) {
+			// Если негде искать вернем false
+			if (!current.right) {
+				return null;
+			// А если есть вернем результат поиска ниже
 			} else {
-				if (!node.left && !node.rigth) {
-					return null;
-				}
-				if (!node.left) {
-					node = node.right;
-					return node;
-				}
-				if (!node.right) {
-					node = node.left;
-					return node;
-				}
-
-				let minFromRight = node.right;
-				while (minFromRight.left) {
-					minFromRight = minFromRight.left
-				}
-				node.data = minFromRight.data;
-				node.right = removeNode(node.right, minFromRight.data);
-
-				return node;
+				return this.find(data, current.right)
 			}
+		// Если data равна текущей, вернем true
+		} else if (data === current.data) {
+			return current;
+		// Если data меньше текущей, пожалуй поищем слева
+		} if (data < current.data) {
+			// Если негде искать вернем false
+			if (!current.left) {
+				return null;
+			// А если есть вернем результат поиска ниже
+			} else {
+				return this.find(data, current.left)
+			}			
 		}
   }
+
+	remove(data){
+		this.rootNode = removeData(this.rootNode, data);
+		function removeData(current, data){
+			if(!current) return null;
+
+			// если искомое меньше или больше рекурсивно погружаемся
+			// возвращаем текущие узлы без изменений
+			if(data < current.data){ 
+				current.left = removeData(current.left, data);
+				return current;
+
+			// Есть совпадение
+			} else if(data == current.data){
+					// если с одной стороны или с двух нет веток
+					if(!current.left && !current.right) return null;
+					if(!current.right) return current.left;
+					if(!current.left)	return current.right;
+
+					// Ветки с двух сторон есть
+					let temp = current.right;   // максимальное правое
+					while(temp.left !== null) // ищем минимальное в правом
+							temp = temp.left;   
+					// меняем на правое
+					current.data = temp.data;
+					current.right = removeData(current.right, temp.data);
+					return current;
+			//	если искомое больше
+			}	else {
+					current.right = removeData(current.right, data);
+					return current;
+			}
+		}
+	}
 
   min() {
-		if (!this.root) return;
-
-		let node = this.root;
-		while (node.left) {
-			node = node.left;
+    // Если дерево пустое - null
+		if (!this.rootNode) return null;
+		// ищем крайний левый передвигая current по веткам вниз влево
+		let current = this.rootNode;
+		while (current.left) {
+			current = current.left;
 		}
-		return node.data;
+		return current.data;  // крайний левый лист найден!
   }
 
   max() {
-		if (!this.root) return;
-		let node = this.root;
-		while (node.right) {
-			node = node.right;
+    // Если дерево пустое - null
+		if (!this.rootNode) return null;
+		// ищем крайний правый передвигая current по веткам вниз вправо
+		let current = this.rootNode;
+		while (current.right) {
+			current = current.right;
 		}
-		return node.data;
+		return current.data;  // крайний правый лист найден!
   }
 }
 
